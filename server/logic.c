@@ -30,8 +30,10 @@ cJSON* create_new_match(create_new_match_buffer *buffer, match *match_list){
         }
     }    
 
+    pthread_mutex_unlock(&mem.lock);
     cJSON *json = cJSON_CreateObject();
     cJSON_AddStringToObject(json, "error", "no free slot to create a match");
+
     return json;
 }
 
@@ -60,18 +62,17 @@ cJSON* send_guest_request(int socket_fd, guest_request_buffer *buffer, match *ma
     int owner_id = match_list[buffer->match_id].owner_id;
 
     if (socket_fd == owner_id) {
-        // Messaggio per l'owner: hai ricevuto una nuova richiesta
         cJSON* owner_payload = cJSON_CreateObject();
         cJSON_AddNumberToObject(owner_payload, "match_id", buffer->match_id);
         cJSON_AddNumberToObject(owner_payload, "guest_id", buffer->guest_id);
         cJSON_AddStringToObject(owner_payload, "guest_username", buffer->guest_username);
         return owner_payload;
     } 
-    
-    // Messaggio per il guest: conferma che la richiesta è stata inviata
+
     cJSON* guest_payload = cJSON_CreateObject();
     cJSON_AddStringToObject(guest_payload, "info", "request to join sent");
     cJSON_AddNumberToObject(guest_payload, "match_id", buffer->match_id);
+
     return guest_payload;
 }
 
@@ -107,6 +108,7 @@ cJSON* handle_draw(handle_draw_buffer *buffer, match *match_list){
     }
     
     cJSON_AddNumberToObject(json, "restart", restart);
+
     return json;
 }
 
@@ -114,7 +116,6 @@ cJSON* delete_match(int match_id, match *match_list){
     pthread_mutex_lock(&mem.lock);
     
     match *current_match = &match_list[match_id];
-    // Cancella dalla lista delle partite del giocatore la match corrente da rimuovere
     current_match->match_id = 0;
     current_match->owner_id = 0;
     current_match->owner_username = "";
@@ -133,6 +134,7 @@ cJSON* delete_match(int match_id, match *match_list){
     }
 
     pthread_mutex_unlock(&mem.lock);
+    
     return get_match_list(match_list);
 }
 
@@ -212,8 +214,7 @@ void wait_draw(handle_draw_buffer *buffer, match *match_list){
             clean_match(current_match->owner_id, current_match);
         }
         current_match->draw.draw_handled = 1;
-        int thread_signaled = pthread_cond_signal(&current_match->cond);
-        printf("[DEBUG] Thread signaled %d\n", thread_signaled);
+        pthread_cond_signal(&current_match->cond);
     } else {
         current_match->draw.owner_answ = 0;
         current_match->draw.guest_answ = 0;
@@ -230,18 +231,16 @@ int remove_client_games(int player_id, match * match_list){
         if ((match_list[i].owner_id == player_id) && (match_list[i].guest_id==0))
             delete_match(i, match_list);
         else if ((match_list[i].owner_id == player_id) && (match_list[i].guest_id!=0)){
-            //notifico il guest della disconnessione
             match *current_match = &match_list[i];
             pthread_mutex_lock(&current_match->lock);
-            clean_match(match_list[i].guest_id, match_list);
+            clean_match(match_list[i].guest_id, current_match);
             pthread_mutex_unlock(&current_match->lock);
             retval = current_match->owner_id;
         }
         else if ((match_list[i].guest_id == player_id)){
-            //notifico l'owner della disconnessione
             match *current_match = &match_list[i];
             pthread_mutex_lock(&current_match->lock);
-            clean_match(match_list[i].owner_id, match_list);
+            clean_match(match_list[i].owner_id, current_match);
             pthread_mutex_unlock(&current_match->lock);
             retval = current_match->owner_id;
         }

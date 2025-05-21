@@ -21,7 +21,7 @@ bool check_draw(int match[3][3]) {
     for (int i = 0; i < 3; i++) {
         for (int j = 0; j < 3; j++) {
             if (match[i][j] == 0) {
-                return false; // Ci sono ancora celle vuote, quindi non è un pareggio
+                return false;
             }
         }
     }
@@ -31,7 +31,6 @@ bool check_draw(int match[3][3]) {
 void convert_json_to_buffer(char *json, generic_buffer *buffer){
     cJSON *json_obj = cJSON_Parse(json);
     if (json_obj == NULL) {
-        //printf("Errore JSON");
         return;
     }
     cJSON *sig_item = cJSON_GetObjectItem(json_obj, "sig");
@@ -141,7 +140,7 @@ cJSON* build_first_connection_message(int socket_id, match *match_list) {
 
     cJSON *content = cJSON_CreateObject();
     cJSON_AddNumberToObject(content, "socket_id", socket_id);
-    cJSON_AddItemToObject(content, "match_list", get_match_list(match_list));  // restituisce array o oggetto
+    cJSON_AddItemToObject(content, "match_list", get_match_list(match_list));
 
     cJSON_AddItemToObject(message, "content", content);
 

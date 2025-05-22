@@ -1,6 +1,6 @@
 import customtkinter as ctk
 import tkinter as tk
-from PIL import Image, ImageTk
+#from PIL import Image, ImageTk
 
 from .frames.home_frame import HomeFrame
 from .frames.login_frame import LoginFrame
@@ -28,7 +28,7 @@ class App(ctk.CTk):
         try:
             image = Image.open(icon_path).convert("RGB")
             self.icon_img = ImageTk.PhotoImage(image)
-            self.wm_iconphoto(True, self.icon_img)  # Icona per finestra
+            self.wm_iconphoto(True, self.icon_img)
             print("Icona caricata")
         except Exception as e:
             print(f"Errore icona: {e}")
@@ -46,7 +46,7 @@ class App(ctk.CTk):
         if self.current_frame:
             self.current_frame.destroy()
         self.current_frame = frame(self)
-        self.title(self.current_frame.page_title)
+        #self.title(self.current_frame.page_title)
         self.current_frame.pack(fill="both", expand=True)
     
     # def show_frame(self, page_name):

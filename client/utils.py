@@ -78,4 +78,10 @@ def set_turn(turn_data: dict):
         popup = Popup(globals.app, "info", "Hai perso! <:(")
         popup.show()
         globals.app.load_home_page()
+
+
+def force_win():
+    popup = Popup(globals.app, "info", "L'avversario si è disconnesso, hai vinto!")
+    popup.show()
+    globals.app.load_home_page()
     

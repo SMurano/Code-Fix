@@ -196,7 +196,6 @@ int send_message(int socket_fd, message_type_enum message_type, generic_buffer *
     cJSON *message = build_message(socket_fd, message_type, buffer);
     char *message_str = cJSON_PrintUnformatted(message);
     int sent = send(socket_fd, message_str, strlen(message_str), 0);
-    
     free(message_str);
     cJSON_Delete(message);
     return sent;

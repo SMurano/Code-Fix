@@ -1,7 +1,7 @@
 import customtkinter as ctk
 
 from core import controller
-from ..popups import Popup, DrawPopup
+from ..popups import Popup
 import utils
 
 FONT = ("Helvetica", 18)
@@ -9,10 +9,8 @@ TEXT_COLOR = "white"
 
 class HomeFrame(ctk.CTkFrame):
     page_title = "Home"
-    
     def __init__(self, master):
         super().__init__(master)
-
         # Layout a griglia 3x1
         self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -77,6 +75,8 @@ class FrameMatches(ctk.CTkScrollableFrame):
         if controller.send_match_request(match_id, utils.get_client_id(), utils.get_client_username()):
             popup = Popup(self, "Info", "Richiesta inviata correttamente")
             popup.show()
+        else:
+            return
 
     def display_matches(self, match_list):
         row = 3
@@ -88,7 +88,7 @@ class FrameMatches(ctk.CTkScrollableFrame):
     def refresh_matches(self):
         match_list_refreshed = controller.get_match_list()
         if match_list_refreshed:
-            utils.switch_frame(HomeFrame)
+            utils.switch_frame("Home")
 
 class FrameYourMatches(ctk.CTkScrollableFrame):
     def __init__(self, master, *args, **kwargs):
@@ -118,12 +118,12 @@ class FrameYourMatches(ctk.CTkScrollableFrame):
     def create_match(self):
         match_created = controller.create_match()
         if match_created: 
-            utils.switch_frame(HomeFrame)
+            utils.switch_frame("Home")
 
     def delete_match(self, match_id):
         match_deleted = controller.delete_match(match_id)
         if match_deleted:
-            utils.switch_frame(HomeFrame)
+            utils.switch_frame("Home")
 
 class FrameNotifications(ctk.CTkScrollableFrame):
     def __init__(self, master, *args, **kwargs):
@@ -168,6 +168,10 @@ class FrameNotifications(ctk.CTkScrollableFrame):
         if match_data == {} or "info" in match_data:
             self.refresh_requests()
             return
-        
+        if "info2" in match_data:
+            popup = Popup(self, "info", "Giocatore disconnesso")
+            popup.show()
+            self.refresh_requests()
+            return
         if answer == 1:
             utils.start_match(match_data)

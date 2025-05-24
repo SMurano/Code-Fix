@@ -83,6 +83,14 @@ cJSON* send_guest_response(guest_response_buffer *buffer, match *match_list){
     if (buffer->owner_answ == 0) {
         cJSON_AddStringToObject(json, "info", "request to join denied");
         cJSON_AddNumberToObject(json, "match_id", buffer->match_id);
+
+        return json;
+    }
+
+    if (buffer->owner_answ == 3) {
+        cJSON_AddStringToObject(json, "info2", "client disconnected");
+        cJSON_AddNumberToObject(json, "match_id", buffer->match_id);
+
         return json;
     }
     
@@ -225,7 +233,7 @@ void wait_draw(handle_draw_buffer *buffer, match *match_list){
 }
 
 int remove_client_games(int player_id, match * match_list){
-    int retval = 0;
+    int opponent_socket = 0;
 
     for (int i = 0; i < MAX_GAMES_NUM; i++) {
         if ((match_list[i].owner_id == player_id) && (match_list[i].guest_id==0))
@@ -235,15 +243,16 @@ int remove_client_games(int player_id, match * match_list){
             pthread_mutex_lock(&current_match->lock);
             clean_match(match_list[i].guest_id, current_match);
             pthread_mutex_unlock(&current_match->lock);
-            retval = current_match->owner_id;
+            opponent_socket = current_match->owner_id;
         }
         else if ((match_list[i].guest_id == player_id)){
             match *current_match = &match_list[i];
             pthread_mutex_lock(&current_match->lock);
             clean_match(match_list[i].owner_id, current_match);
             pthread_mutex_unlock(&current_match->lock);
-            retval = current_match->owner_id;
+            opponent_socket = current_match->owner_id;
         }
     }
-    return retval;
+
+    return opponent_socket;
 }

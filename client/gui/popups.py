@@ -64,7 +64,7 @@ class DrawPopup(Popup):
         import utils
         response = controller.send_draw_response(choice)
         if not response["restart"]:
-            utils.load_home_page()
+            utils.switch_frame("Home")
         else:
             utils.start_match()
 

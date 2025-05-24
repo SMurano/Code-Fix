@@ -27,18 +27,27 @@ void* handle_client(void* arg) {
         switch(buffer.sig){
             case SIG_GUEST_REQUEST:
                 int owner_socket = mem.match_list[buffer.guest_request.match_id].owner_id;
-                send_message(owner_socket, MESSAGE_NOTIFICATION, &buffer);
-                send_message(client_socket, MESSAGE_RESPONSE, &buffer);
-            break;
+                if(owner_socket!=client_socket){
+                    send_message(owner_socket, MESSAGE_NOTIFICATION, &buffer);
+                    send_message(client_socket, MESSAGE_RESPONSE, &buffer);
+                }
 
+            break;
             case SIG_GUEST_RESPONSE:
                 int guest_socket = buffer.guest_response.guest_id;
-                if (buffer.guest_response.owner_answ == 1)
+                if (buffer.guest_response.owner_answ==1){
                     start_match(&buffer.guest_response, mem.match_list);
-                send_message(guest_socket, MESSAGE_ALERT, &buffer);
-                send_message(client_socket, MESSAGE_RESPONSE, &buffer);
+                }
+                    
+                    if (send_message(guest_socket, MESSAGE_ALERT, &buffer)!=-1){ 
+                        send_message(client_socket, MESSAGE_RESPONSE, &buffer);
+                    } else{
+                        buffer.guest_response.owner_answ=3;
+                        send_message(client_socket, MESSAGE_RESPONSE, &buffer);
+                        clean_match(client_socket,&mem.match_list[buffer.guest_response.match_id]);
+                    }
+                        
             break;
-
             case SIG_MAKE_MOVE:
                 int opponent_id;
                 match *current_match = &mem.match_list[buffer.make_move.match_id];
@@ -55,17 +64,17 @@ void* handle_client(void* arg) {
                     clean_match(buffer.make_move.player_id, current_match);
                 pthread_mutex_unlock(&current_match->lock);
             break;
-
             case SIG_HANDLE_DRAW:
+
                 wait_draw(&buffer.handle_draw, mem.match_list);
                 send_message(client_socket, MESSAGE_RESPONSE, &buffer);
             break;
-            
             default:
                 send_message(client_socket, MESSAGE_RESPONSE, &buffer);
             break;
         }
     }
+
     printf("[INFO] Client %d disconnected\n",client_socket);
     handle_client_disconnection(client_socket);
     

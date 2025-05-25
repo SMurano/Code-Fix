@@ -44,6 +44,11 @@ def delete_notification(match_id: int, guest_id: int, guest_username: str, answe
         lambda n: n["match_id"] != match_id, notifications_list
     ))
 
+def delete_match_notifications(match_id: int):
+    globals.client.notifications_list = list(filter(
+        lambda n: n["match_id"] != match_id, globals.client.notifications_list
+    ))
+
 def start_match(match_data: dict = {}):
     if match_data != {}:
         current_match = Match(
@@ -70,6 +75,8 @@ def set_turn(turn_data: dict):
         popup.show()
         switch_frame("Home")
     elif turn_data["match_outcome"] == "lose":
+        match=get_current_match()
+        delete_match_notifications(match.match_id)
         popup = Popup(globals.app, "info", "Hai perso! <:(")
         popup.show()
         switch_frame("Home")

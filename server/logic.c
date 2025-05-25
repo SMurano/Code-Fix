@@ -59,8 +59,13 @@ cJSON* make_move(int socket_fd, make_move_buffer *buffer, match *match_list) {
 }
 
 cJSON* send_guest_request(int socket_fd, guest_request_buffer *buffer, match *match_list){
+    if(buffer->match_id==-1){
+        cJSON* error_payload = cJSON_CreateObject();
+        cJSON_AddStringToObject(error_payload, "info", "match not available");
+    return error_payload;
+    }
+    
     int owner_id = match_list[buffer->match_id].owner_id;
-
     if (socket_fd == owner_id) {
         cJSON* owner_payload = cJSON_CreateObject();
         cJSON_AddNumberToObject(owner_payload, "match_id", buffer->match_id);
@@ -135,12 +140,6 @@ cJSON* delete_match(int match_id, match *match_list){
         for (int j = 0; j < 3; j++)
             current_match->grid[i][j] = 0;
 
-    while (current_match->requests){
-        match_request *tmp = current_match->requests;
-        current_match->requests = current_match->requests->next;
-        free(tmp);
-    }
-
     pthread_mutex_unlock(&mem.lock);
     
     return get_match_list(match_list);
@@ -154,12 +153,6 @@ void start_match(guest_response_buffer *buffer, match *match_list) {
     current_match->match_state = MATCH_STATE_ONGOING;
     current_match->guest_username = buffer->guest_username;
     current_match->turn = rand() % 2;
-
-    while (current_match->requests){
-        match_request *tmp = current_match->requests;
-        current_match->requests = current_match->requests->next;
-        free(tmp);
-    }
 }
 
 void update_match(make_move_buffer *buffer, match *match_list) {

@@ -76,7 +76,9 @@ class FrameMatches(ctk.CTkScrollableFrame):
             popup = Popup(self, "Info", "Richiesta inviata correttamente")
             popup.show()
         else:
-            return
+            popup = Popup(self, "Info", "Match inesistente")
+            popup.show()
+            self.refresh_matches()
 
     def display_matches(self, match_list):
         row = 3
@@ -122,8 +124,12 @@ class FrameYourMatches(ctk.CTkScrollableFrame):
 
     def delete_match(self, match_id):
         match_deleted = controller.delete_match(match_id)
-        if match_deleted:
-            utils.switch_frame("Home")
+        if not match_deleted:
+            popup = Popup(self, "info", "Il match non ti appartiene più")
+            popup.show()
+            controller.get_match_list()
+        utils.delete_match_notifications(match_id)
+        utils.switch_frame("Home")
 
 class FrameNotifications(ctk.CTkScrollableFrame):
     def __init__(self, master, *args, **kwargs):

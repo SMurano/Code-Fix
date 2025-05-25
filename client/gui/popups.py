@@ -16,7 +16,7 @@ class Popup:
         if self.active_popup is None or not self.active_popup.winfo_exists():
             self.active_popup = ctk.CTkToplevel(self.master)
             self.active_popup.title(self.title)
-            self.active_popup.geometry("300x150")
+            self.active_popup.geometry("350x150")
             self.active_popup.resizable(False, False)
 
             label = ctk.CTkLabel(self.active_popup, text=self.message, font=FONT)

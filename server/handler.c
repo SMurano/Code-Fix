@@ -26,12 +26,15 @@ void* handle_client(void* arg) {
 
         switch(buffer.sig){
             case SIG_GUEST_REQUEST:
+                match *current_match = &mem.match_list[buffer.make_move.match_id];
                 int owner_socket = mem.match_list[buffer.guest_request.match_id].owner_id;
-                if(owner_socket!=client_socket){
+                if ((current_match->owner_id == 0) || (current_match->owner_id == buffer.guest_request.guest_id) || (current_match->guest_id !=0) || (current_match->match_state != MATCH_STATE_CREATING)){
+                    buffer.guest_request.match_id=-1;
+                    send_message(client_socket, MESSAGE_RESPONSE, &buffer);
+                }else{
                     send_message(owner_socket, MESSAGE_NOTIFICATION, &buffer);
                     send_message(client_socket, MESSAGE_RESPONSE, &buffer);
-                }
-
+                }       
             break;
             case SIG_GUEST_RESPONSE:
                 int guest_socket = buffer.guest_response.guest_id;
@@ -45,12 +48,11 @@ void* handle_client(void* arg) {
                         buffer.guest_response.owner_answ=3;
                         send_message(client_socket, MESSAGE_RESPONSE, &buffer);
                         clean_match(client_socket,&mem.match_list[buffer.guest_response.match_id]);
-                    }
-                        
+                    }   
             break;
             case SIG_MAKE_MOVE:
                 int opponent_id;
-                match *current_match = &mem.match_list[buffer.make_move.match_id];
+                current_match = &mem.match_list[buffer.make_move.match_id];
                 if (buffer.make_move.player_id == mem.match_list[buffer.make_move.match_id].owner_id)
                     opponent_id = mem.match_list[buffer.make_move.match_id].guest_id;
                 else
@@ -65,7 +67,6 @@ void* handle_client(void* arg) {
                 pthread_mutex_unlock(&current_match->lock);
             break;
             case SIG_HANDLE_DRAW:
-
                 wait_draw(&buffer.handle_draw, mem.match_list);
                 send_message(client_socket, MESSAGE_RESPONSE, &buffer);
             break;
